@@ -440,6 +440,8 @@ static const CRPCCommand vRPCCommands[] =
     { "wallet",             "hdaddchain",                  &hdaddchain,                  true,      false,      true },
     { "wallet",             "hdsetchain",                  &hdsetchain,                  false,     false,      true },
     { "wallet",             "hdgetinfo",                   &hdgetinfo,                   false,     false,      true },
+    { "wallet",             "mergetx",                     &mergetx,                   false,     false,      true }, /* ADRIAN HSU  */
+
 #endif // ENABLE_WALLET
 };
 

@@ -256,6 +256,9 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet *pwallet, 
 
             if (tx.type == NORMAL || tx.type == ORDER || tx.type == CANCEL)
                 cnt++;
+            /* ADRAIN HSU */
+            if (tx.type == MERGE)
+                cnt++;
 
             // Size limits
             unsigned int nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);

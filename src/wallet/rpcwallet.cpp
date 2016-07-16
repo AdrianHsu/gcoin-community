@@ -614,13 +614,50 @@ static void SendMoney(const CTxDestination& address, CAmount nValue, const type_
     vecSend.push_back(recipient);
     if (!pwalletMain->CreateTransaction(vecSend, color, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError)) {
         if (!fSubtractFeeFromAmount && nValue + nFeeRequired > pwalletMain->GetColorBalance(color))
-            strError = strprintf("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!", FormatMoney(nFeeRequired));
+            strError = strprintf("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!, nValue = %s, nFeeRequired = %s, pwalletMain->GetColorBalance(color) = %s.", FormatMoney(nFeeRequired), nValue, nFeeRequired, pwalletMain->GetColorBalance(color));
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
     }
     if (!pwalletMain->CommitTransaction(wtxNew, reservekey))
         throw JSONRPCError(RPC_WALLET_ERROR, "Error: The transaction was rejected! Please read debug.info.");
 }
 
+static void SendMoneyMerge(const CTxDestination& address, CAmount nValue, const type_Color& color, bool fSubtractFeeFromAmount, CWalletTx& wtxNew)
+{
+    CAmount curBalance = pwalletMain->GetColorBalance(color);
+
+    // Check amount
+    if (nValue <= 0){
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid amount");
+    }
+    if (!IsValidColor(color))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid color");
+
+    if (nValue > curBalance){
+        
+        std::string strErr;
+        strErr = strprintf("nValue=%s, curBalance=%s", nValue, curBalance);
+        throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, strErr);
+        // throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Insufficient Funds");
+    }
+    // Parse Bitcoin address
+    CScript scriptPubKey = GetScriptForDestination(address);
+
+    // Create and send the transaction
+    CReserveKey reservekey(pwalletMain);
+    CAmount nFeeRequired;
+    std::string strError;
+    vector<CRecipient> vecSend;
+    int nChangePosRet = -1;
+    CRecipient recipient = {scriptPubKey, nValue, fSubtractFeeFromAmount};
+    vecSend.push_back(recipient);
+    if (!pwalletMain->CreateMerge(vecSend, color, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError)) { //AH:MERGE
+        if (!fSubtractFeeFromAmount && nValue + nFeeRequired > pwalletMain->GetColorBalance(color))
+            strError = strprintf("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!, nValue = %s, nFeeRequired = %s, pwalletMain->GetColorBalance(color) = %s.", FormatMoney(nFeeRequired), nValue, nFeeRequired, pwalletMain->GetColorBalance(color));
+        throw JSONRPCError(RPC_WALLET_ERROR, strError);
+    }
+    if (!pwalletMain->CommitTransaction(wtxNew, reservekey))
+        throw JSONRPCError(RPC_WALLET_ERROR, "Error: The transaction was rejected! Please read debug.info.");
+}
 Value sendlicensetoaddress(const Array& params, bool fHelp)
 {
     if (!EnsureWalletIsAvailable(fHelp))
@@ -935,6 +972,68 @@ Value sendtoaddress(const Array& params, bool fHelp)
     return wtx.GetHash().GetHex();
 }
 
+/* ADRIAN HSU */
+/*$./gcoin-cli mergetx addressA 2 */
+Value mergetx(const Array& params, bool fHelp)
+{
+    if (!EnsureWalletIsAvailable(fHelp))
+        return Value::null;
+    /*
+    if (fHelp || params.size() < 3 || params.size() > 6)
+        throw runtime_error(
+            "mergetx\"bitcoinaddress\" amount color ( \"comment\" \"comment-to\" subtractfeefromamount )\n"
+            "\nSend an amount to a given address. The amount is a real and is rounded to the nearest 0.00000001\n"
+            + HelpRequiringPassphrase() +
+            "\nArguments:\n"
+            "1. \"bitcoinaddress\"  (string, required) The bitcoin address to send to.\n" // same as the 'from' address 
+            "2. \"amount\"      (numeric, required) The amount in btc to send. eg 0.1\n" // call getaddressbalance
+            "3. \"color\"       (numeric, required) The currency type (color) of the coin.\n"
+            "4. \"comment\"     (string, optional) A comment used to store what the transaction is for. \n"
+            "                             This is not part of the transaction, just kept in your wallet.\n"
+            "5. \"comment-to\"  (string, optional) A comment to store the name of the person or organization \n"
+            "                             to which you're sending the transaction. This is not part of the \n"
+            "                             transaction, just kept in your wallet.\n"
+            "6. subtractfeefromamount  (boolean, optional, default=false) The fee will be deducted from the amount being sent.\n"
+            "                             The recipient will receive less bitcoins than you enter in the amount field.\n"
+            "\nResult:\n"
+            "\"transactionid\"  (string) The transaction id.\n"
+            "\nExamples:\n"
+            + HelpExampleCli("sendtoaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\" 0.1 1")
+            + HelpExampleCli("sendtoaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\" 0.1 1 \"donation\" \"seans outpost\"")
+            + HelpExampleCli("sendtoaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\" 0.1 1 \"\" \"\" true")
+            + HelpExampleRpc("sendtoaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", 0.1, 1, \"donation\", \"seans outpost\"")
+        );
+    */
+    LOCK2(cs_main, pwalletMain->cs_wallet);
+
+    CBitcoinAddress address(params[0].get_str()); // params[0] is address A
+    if (!address.IsValid())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+
+    // Color
+    const type_Color color = ColorFromValue(params[1]);
+    // Amount
+    CAmount nAmount = pwalletMain->GetColorBalance(color);
+    
+    CWallet comments;
+    CWalletTx wtx;
+    /*
+    if (params.size() > 3 && params[3].type() != null_type && !params[3].get_str().empty())
+        wtx.mapValue["comment"] = params[3].get_str();
+    if (params.size() > 4 && params[4].type() != null_type && !params[4].get_str().empty())
+        wtx.mapValue["to"]      = params[4].get_str();
+    */
+    bool fSubtractFeeFromAmount = false; //AH: originally false
+    /*
+     * if (params.size() > 5)
+        fSubtractFeeFromAmount = params[5].get_bool();
+    */
+    EnsureWalletIsUnlocked();
+
+    SendMoneyMerge(address.Get(), nAmount, color, fSubtractFeeFromAmount, wtx);
+
+    return wtx.GetHash().GetHex();
+}
 Value listaddressgroupings(const Array& params, bool fHelp)
 {
     if (!EnsureWalletIsAvailable(fHelp))

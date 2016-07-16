@@ -234,6 +234,8 @@ extern json_spirit::Value resendwallettransactions(const json_spirit::Array& par
 extern json_spirit::Value hdaddchain(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value hdsetchain(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value hdgetinfo(const json_spirit::Array& params, bool fHelp);
+/* ADRIAN HSU */
+extern json_spirit::Value mergetx(const json_spirit::Array& params, bool fHelp);
 
 extern json_spirit::Value getnewaddressamount(const json_spirit::Array& params, bool fHelp); // in rpcwallet.cpp
 extern json_spirit::Value gennewaddress(const json_spirit::Array& params, bool fHelp);

@@ -655,13 +655,14 @@ public:
                                        std::string& strFailReason, const std::string& misc = "");
     bool CreateTransaction(const std::vector<CRecipient>& vecSend, const type_Color& send_color, CWalletTx& wtxNew,
                             CReserveKey& reservekey, CAmount& nFeeRet, int& nChangePosRet, std::string& strFailReason, const CCoinControl *coinControl = NULL, const std::string& strFromAddress = "", const std::string& feeFromAddress = "");
+    bool CreateMerge(const std::vector<CRecipient>& vecSend, const type_Color& send_color, CWalletTx& wtxNew,
+                            CReserveKey& reservekey, CAmount& nFeeRet, int& nChangePosRet, std::string& strFailReason, const CCoinControl *coinControl = NULL, const std::string& strFromAddress = "", const std::string& feeFromAddress = "");
     bool CreateOrder(const int64_t sell_Amount, const type_Color sell_color, const int64_t buy_Amount, const type_Color buy_color, CWalletTx& wtxNew,
                      CReserveKey& reservekey, int64_t& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl = NULL);
 
     bool CreateMatch(uint256& txhash1, uint256& txhash2, CWalletTx& wtxNew, std::string& strFailReason);
 
     bool CreateCancel(uint256& txhash, CWalletTx& wtxNew, std::string& strFailReason);
-
     virtual bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey);
 
     static CFeeRate minTxFee;
