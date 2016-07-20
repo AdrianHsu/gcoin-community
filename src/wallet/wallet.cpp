@@ -1476,7 +1476,7 @@ void CWallet::GetBalance(map<type_Color, CAmount>& color_amount) const
         LOCK2(cs_main, cs_wallet);
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it) {
             const CWalletTx* pcoin = &(*it).second;
-            if (pcoin->IsTrusted() && (pcoin->type == NORMAL || pcoin->type == MINT || pcoin->type == MATCH || pcoin->type == CANCEL || pcoin->type == ORDER)) {
+            if (pcoin->IsTrusted() && (pcoin->type == NORMAL || pcoin->type == MINT || pcoin->type == MATCH || pcoin->type == CANCEL || pcoin->type == ORDER || pcoin->type == MERGE)) {
                 pcoin->GetAvailableCredit(color_amount);
             }
         }
@@ -1570,7 +1570,7 @@ CAmount CWallet::GetColorBalance(const type_Color& color) const
         LOCK2(cs_main, cs_wallet);
         for (map<uint256, CWalletTx>::const_iterator it = mapWallet.begin(); it != mapWallet.end(); ++it) {
             const CWalletTx* pcoin = &(*it).second;
-            if (pcoin->IsTrusted() && (pcoin->type == NORMAL || pcoin->type == MINT || pcoin->type == MATCH || pcoin->type == CANCEL || pcoin->type == ORDER))
+            if (pcoin->IsTrusted() && (pcoin->type == NORMAL || pcoin->type == MINT || pcoin->type == MATCH || pcoin->type == CANCEL || pcoin->type == ORDER || pcoin->type == MERGE))
                 nTotal += pcoin->GetAvailableColorCredit(color);
         }
     }

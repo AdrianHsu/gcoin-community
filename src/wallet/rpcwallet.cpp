@@ -621,10 +621,18 @@ static void SendMoney(const CTxDestination& address, CAmount nValue, const type_
         throw JSONRPCError(RPC_WALLET_ERROR, "Error: The transaction was rejected! Please read debug.info.");
 }
 
-static void SendMoneyMerge(const CTxDestination& address, CAmount nValue, const type_Color& color, bool fSubtractFeeFromAmount, CWalletTx& wtxNew)
+static void SendMoneyMerge(const CTxDestination& address, CAmount nValue, const type_Color& color, bool fSubtractFeeFromAmount, CWalletTx& wtxNew, const string& strAddress)
 {
-    CAmount curBalance = pwalletMain->GetColorBalance(color);
 
+    map<type_Color, CAmount> tmp_color;
+    pwalletMain->GetAddressBalance(strAddress, tmp_color, 0);
+
+    CAmount curBalance = tmp_color[color];
+    // CAmount curBalance = pwalletMain->GetColorBalance(color);
+
+    
+    LogPrintf("in SendMoneyMerge: nValue=%s, curBalance=%s", nValue, curBalance);
+    
     // Check amount
     if (nValue <= 0){
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid amount");
@@ -651,8 +659,8 @@ static void SendMoneyMerge(const CTxDestination& address, CAmount nValue, const 
     CRecipient recipient = {scriptPubKey, nValue, fSubtractFeeFromAmount};
     vecSend.push_back(recipient);
     if (!pwalletMain->CreateMerge(vecSend, color, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError)) { //AH:MERGE
-        if (!fSubtractFeeFromAmount && nValue + nFeeRequired > pwalletMain->GetColorBalance(color))
-            strError = strprintf("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!, nValue = %s, nFeeRequired = %s, pwalletMain->GetColorBalance(color) = %s.", FormatMoney(nFeeRequired), nValue, nFeeRequired, pwalletMain->GetColorBalance(color));
+        if (!fSubtractFeeFromAmount && nValue + nFeeRequired > curBalance)
+            strError = strprintf("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!, nValue = %s, nFeeRequired = %s, pwalletMain->GetColorBalance(color) = %s.", FormatMoney(nFeeRequired), nValue, nFeeRequired, curBalance);
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
     }
     if (!pwalletMain->CommitTransaction(wtxNew, reservekey))
@@ -1012,8 +1020,14 @@ Value mergetx(const Array& params, bool fHelp)
 
     // Color
     const type_Color color = ColorFromValue(params[1]);
+    
+    map<type_Color, CAmount> tmp_color;
+    string strAddress = params[0].get_str();
+    pwalletMain->GetAddressBalance(strAddress, tmp_color, 0);
+
     // Amount
-    CAmount nAmount = pwalletMain->GetColorBalance(color);
+    CAmount nAmount = tmp_color[color];
+    //CAmount nAmount = pwalletMain->GetColorBalance(color);
     
     CWallet comments;
     CWalletTx wtx;
@@ -1030,7 +1044,7 @@ Value mergetx(const Array& params, bool fHelp)
     */
     EnsureWalletIsUnlocked();
 
-    SendMoneyMerge(address.Get(), nAmount, color, fSubtractFeeFromAmount, wtx);
+    SendMoneyMerge(address.Get(), nAmount, color, fSubtractFeeFromAmount, wtx, strAddress);
 
     return wtx.GetHash().GetHex();
 }

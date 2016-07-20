@@ -3636,7 +3636,7 @@ bool CheckCoinBaseTransactions(const CBlock& block)
     unsigned int cnt = 0;
     for (unsigned int i = 1; i < block.vtx.size(); i++) {
         const CTransaction& tx = block.vtx[i];
-        if (tx.type == NORMAL || tx.type == ORDER || tx.type == CANCEL) {
+        if (tx.type == NORMAL || tx.type == ORDER || tx.type == CANCEL || tx.type == MERGE) {
             // Fee needed.
             cnt++;
         }
