@@ -126,9 +126,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "estimatepriority", 0 },
     { "prioritisetransaction", 1 },
     { "prioritisetransaction", 2 },
-    { "mergetx", 1 }, /* ADRIAN HSU */
-    { "mergetx", 2 }, /* ADRIAN HSU */
-    { "mergetx", 4 }, /* ADRIAN HSU */
 };
 
 class CRPCConvertTable

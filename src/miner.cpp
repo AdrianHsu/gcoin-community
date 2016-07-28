@@ -254,10 +254,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet *pwallet, 
             std::pop_heap(vecPriority.begin(), vecPriority.end(), comparer);
             vecPriority.pop_back();
 
-            if (tx.type == NORMAL || tx.type == ORDER || tx.type == CANCEL)
-                cnt++;
-            /* ADRAIN HSU */
-            if (tx.type == MERGE)
+            if (tx.type == CONTRACT || tx.type == NORMAL || tx.type == ORDER || tx.type == CANCEL)
                 cnt++;
 
             // Size limits

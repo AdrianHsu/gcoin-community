@@ -184,8 +184,7 @@ enum TransactionType
     ORDER,
     MATCH,
     CANCEL,
-    /* ADRIAN HSU */
-    MERGE,
+    CONTRACT,
 
     UNKNOWN
 };
@@ -199,9 +198,8 @@ std::string const TxType[] = {
     "ORDER",
     "MATCH",
     "CANCEL",
-    /* ADRIAN HSU */
-    "MERGE",
-    
+    "CONTRACT",
+
     "UNKNOWN"
 };
 
